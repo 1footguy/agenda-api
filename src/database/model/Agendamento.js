@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 
 export default function defineConnection (connection){
-    return connection.define("agendamentos", {
+    const Agendamento = connection.define("agendamentos", {
     id: {
         type: DataTypes.INTEGER.UNSIGNED,
         primaryKey: true,
@@ -22,4 +22,5 @@ export default function defineConnection (connection){
 }, { 
     timestamps: false,
   })
+  return Agendamento;
 }
