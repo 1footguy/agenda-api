@@ -1,49 +1,60 @@
 import { Sequelize } from "sequelize";
+import defineConnection from "./model/Agendamento.js"
 
 const host = process.env.DB_HOST;
 const username = process.env.DB_USER;
 const password = process.env.DB_PASS;
+const db = process.env.DB_NAME;
 
+let sequelize = {}
 
 if (!host || !username || !password) {
     throw new Error("As variáveis de ambiente (.env) devem estar definidas.");
 }
 
-const initConnection = new Sequelize({
-    dialect: "mysql",
-    host,
-    username,
-    password,
-    logging: false
-});
+async function createDB(){
 
-let connection
+    const connection = new Sequelize({
+        dialect: "mysql",
+        host,
+        username,
+        password,
+    });
 
-async function updatedConnection() {
-    const db = process.env.DB_NAME;
-    if (!connection) {
-        try {
-            await initConnection.authenticate();
-            await initConnection.query(`CREATE DATABASE IF NOT EXISTS ${db}`);
-
-            const { host, username, password } = initConnection.config;
-
-            connection = new Sequelize({
-                dialect: "mysql",
-                host,
-                username,
-                password,
-                database: db,
-                logging: false
-            });
-
-            await connection.authenticate(); 
-            await initConnection.close();
-        } catch (error) {
-            console.error(`Erro ao conectar com banco de dados: ${error}`);
-        } 
-    }
-    return connection;
+    await connection.authenticate();
+    await connection.query(`CREATE DATABASE IF NOT EXISTS ${db}`);
+    await connection.close();
 }
 
-export {initConnection, updatedConnection}
+async function createTable(connection){
+    try {
+        const Agendamento = defineConnection(connection)
+        await Agendamento.sync({alter: true});
+        return Agendamento;
+    } catch (error) {
+        console.error(`Ocorreu um erro na criação da tabela: ${error}`);
+    }
+}
+
+
+(async () => {
+    await createDB()
+
+    const connection = new Sequelize({
+        dialect: "mysql",
+        host,
+        username,
+        password,
+        database: db,
+        logging: false
+    });
+
+    
+    const Agendamento = await createTable(connection);
+    await connection.authenticate();
+    sequelize.Agendamento = Agendamento;
+    console.log("conexao estabelecida");
+    
+})();
+
+export default sequelize 
